@@ -137,3 +137,36 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# ==================================================
+# Project-specific ignores for backend/frontend local uploads
+# Prevent committing uploaded files, local DBs, venvs and instance files
+# ==================================================
+
+# Backend (Flask) local/runtime artifacts
+/backend/venv/
+/backend/.venv/
+/backend/__pycache__/
+/backend/instance/
+/backend/data.db
+/backend/*.db
+/backend/*.sqlite
+/backend/uploads/
+/backend/static/uploads/
+/backend/media/
+
+# Frontend build / local artifacts (catch frontend-specific folders)
+/frontend/dist/
+/frontend/build/
+/frontend/.cache/
+
+# Generic catches for uploaded/media files anywhere in the repo
+**/uploads/
+**/uploaded/
+**/media/
+**/static/uploads/
+
+# Local env files (already covered globally but make explicit per-service)
+/backend/.env
+/frontend/.env
+
