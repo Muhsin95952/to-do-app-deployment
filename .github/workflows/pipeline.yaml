@@ -148,10 +148,26 @@ jobs:
     # This is the key: it waits for BOTH parallel jobs to finish
     needs: [build-scan-push-frontend, build-scan-push-backend]
     
+    # <-- ADD THIS PERMISSIONS BLOCK
+    # This allows the action to authenticate with AWS
+    permissions:
+      id-token: write
+      contents: read
+    
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
 
+      # <-- ADD THIS NEW STEP
+      # This step logs into AWS using your new secrets
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # The region your cluster is in
+
+      # This step will now work because you are logged into AWS
       - name: Set up Kubeconfig
         uses: azure/k8s-set-context@v4.0.0
         with:
@@ -178,4 +194,3 @@ jobs:
           # Use the correct folder name
           kustomize build kubernetes/ | kubectl apply -f -
 
-            
