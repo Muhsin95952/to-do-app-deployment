@@ -141,7 +141,7 @@ jobs:
   # JOB 4: Deploy to Kubernetes
   # This job only runs if BOTH build/scan/push jobs succeed
   ####################################################################
-  deploy:
+deploy:
     name: Deploy to Kubernetes
     runs-on: ubuntu-latest
     
@@ -166,13 +166,16 @@ jobs:
           FRONTEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/my-todo-frontend
           BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/my-todo-backend
         run: |
-          cd k8s/
+          # Use the correct folder name
+          cd kubernetes/ 
+          
           # These image names ('my-frontend-image') must match what's in your kustomization.yml
           kustomize edit set image my-frontend-image=${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
           kustomize edit set image my-backend-image=${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
       
       - name: Deploy to Kubernetes
         run: |
-          kustomize build k8s/ | kubectl apply -f -
+          # Use the correct folder name
+          kustomize build kubernetes/ | kubectl apply -f -
 
 ###########
