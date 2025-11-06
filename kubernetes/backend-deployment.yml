@@ -1,23 +1,28 @@
-# This file tells K8s how to run your backend
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend-deployment
 spec:
-  replicas: 2 # Run 2 copies of the backend for high availability
+  replicas: 2
   selector:
     matchLabels:
-      app: backend # The "hook" that the Service will look for
-  template: # This is the Pod (container) definition
+      app: backend
+  template:
     metadata:
       labels:
-        app: backend # The "label" on the Pod
+        app: backend
     spec:
       containers:
-        - name: backend-container
-          # This name is a placeholder!
-          # kustomize will replace this with your real image from Docker Hub
-          image: my-backend-image 
+        - name: backend
+          # This name 'my-backend-image' MUST match the one in your kustomization.yml
+          image: my-backend-image
           ports:
-            - containerPort: 5000 # The port Gunicorn is running on
+            - containerPort: 5000
+          
+          # --- ADD THIS BLOCK ---
+          # This tells the container to load all key/value pairs
+          # from the 'backend-secret' as environment variables.
+          envFrom:
+            - secretRef:
+                name: backend-secret
+          # ----------------------
