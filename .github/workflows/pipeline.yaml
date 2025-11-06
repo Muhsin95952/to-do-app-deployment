@@ -1,0 +1,176 @@
+# .github/workflows/ci-cd.yml
+
+name: Advanced CI/CD with Security Scanning
+
+on:
+  push:
+    branches: [ "main" ]
+
+# Global environment variables
+env:
+  # Using the GitHub SHA for the image tag is a robust and traceable practice
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  ####################################################################
+  # JOB 1: Filesystem Vulnerability Scan (Trivy)
+  # Scans code (like package-lock.json) before any building
+  ####################################################################
+  filesystem-security-scan:
+    name: Trivy Filesystem Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Run Trivy FS scan on Frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './frontend' # Path to your frontend code
+          exit-code: '1'
+          ignore-unfixed: true # Don't fail for vulnerabilities with no fix
+          vuln-type: 'os,library'
+          # Fail the build ONLY for CRITICAL or HIGH vulnerabilities
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy FS scan on Backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './backend' # Path to your backend code
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+  ####################################################################
+  # JOB 2: Build, Scan, and Push the FRONTEND
+  # Runs in parallel with the backend job
+  ####################################################################
+  build-scan-push-frontend:
+    name: Build, Scan & Push Frontend
+    runs-on: ubuntu-latest
+    # This job must wait for the filesystem scan to pass
+    needs: filesystem-security-scan
+    
+    env:
+      IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/my-todo-frontend
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false # Do NOT push yet.
+          # Load the image into the local Docker daemon to be scanned
+          load: true 
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Docker image to Docker Hub
+        # This step only runs if the 'Scan' step above passed
+        run: docker push ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+  ####################################################################
+  # JOB 3: Build, Scan, and Push the BACKEND
+  # Runs in parallel with the frontend job
+  ####################################################################
+  build-scan-push-backend:
+    name: Build, Scan & Push Backend
+    runs-on: ubuntu-latest
+    # This job must wait for the filesystem scan to pass
+    needs: filesystem-security-scan
+
+    env:
+      IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/my-todo-backend
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false # Do NOT push yet.
+          load: true # Load image locally for scanning
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+  ####################################################################
+  # JOB 4: Deploy to Kubernetes
+  # This job only runs if BOTH build/scan/push jobs succeed
+  ####################################################################
+#   deploy:
+#     name: Deploy to Kubernetes
+#     runs-on: ubuntu-latest
+    
+#     # This is the key: it waits for BOTH parallel jobs to finish
+#     needs: [build-scan-push-frontend, build-scan-push-backend]
+    
+#     steps:
+#       - name: Check out the repo
+#         uses: actions/checkout@v4
+
+#       - name: Set up Kubeconfig
+#         uses: azure/k8s-set-context@v4.0.0
+#         with:
+#           method: kubeconfig
+#           kubeconfig: ${{ secrets.KUBE_CONFIG_DATA }}
+      
+#       - name: Set up Kustomize
+#         uses: imranismail/setup-kustomize@v2
+
+#       - name: Update image tags in Kustomization
+#         env:
+#           FRONTEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/my-todo-frontend
+#           BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/my-todo-backend
+#         run: |
+#           cd k8s/
+#           # These image names ('my-frontend-image') must match what's in your kustomization.yml
+#           kustomize edit set image my-frontend-image=${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
+#           kustomize edit set image my-backend-image=${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
+      
+#       - name: Deploy to Kubernetes
+#         run: |
+#           kustomize build k8s/ | kubectl apply -f -
