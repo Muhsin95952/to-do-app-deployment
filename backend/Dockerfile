@@ -11,6 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements file
 COPY requirements.txt .
 
+# ==================== ADD THIS LINE ====================
+# Upgrade pip and setuptools to patch vulnerabilities *before* installing requirements
+RUN pip install --upgrade pip setuptools
+# =======================================================
+
 # Create virtual environment and install dependencies
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -20,6 +25,13 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 FROM python:3.11-slim-bullseye
 
 WORKDIR /app
+
+# ==================== ADD THIS SECTION ====================
+# Install security updates for OS packages (like libgnutls30, libpam, etc.)
+RUN apt-get update && \
+    apt-get upgrade -y --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+# ==========================================================
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv

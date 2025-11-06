@@ -1,4 +1,4 @@
-# Build stage
+# Build stage (This stage is fine, no changes needed)
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -17,6 +17,13 @@ RUN npm run build
 
 # Production stage
 FROM nginx:1.25-alpine
+
+# ==================== ADD THIS SECTION ====================
+# Install security updates for Alpine packages (like curl, libxml2, etc.)
+RUN apk update && \
+    apk upgrade && \
+    rm -rf /var/cache/apk/*
+# ==========================================================
 
 # Copy the built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
