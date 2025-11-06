@@ -1,0 +1,16 @@
+# This file exposes your frontend to the public internet
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  # 'LoadBalancer' tells AWS to create an Elastic Load Balancer (ELB)
+  # This will give you a public IP address
+  type: LoadBalancer
+  selector:
+    app: frontend # Finds all Pods with the "app: frontend" label
+  ports:
+    - protocol: TCP
+      port: 80       # The public port the Load Balancer listens on
+      targetPort: 80 # The port on the Pods to send traffic to

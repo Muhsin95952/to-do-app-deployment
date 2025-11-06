@@ -1,0 +1,15 @@
+# This file gives your backend a stable, internal-only network name
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  # 'ClusterIP' means this service is ONLY reachable from INSIDE the cluster
+  type: ClusterIP 
+  selector:
+    app: backend # Finds all Pods with the "app: backend" label
+  ports:
+    - protocol: TCP
+      port: 5000       # The service's "internal" port
+      targetPort: 5000 # The port on the Pods to send traffic to

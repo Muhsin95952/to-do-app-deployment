@@ -1,0 +1,22 @@
+# This file tells K8s how to run your frontend
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend-container
+          # This name is also a placeholder
+          image: my-frontend-image 
+          ports:
+            - containerPort: 80 # The port Nginx is running on

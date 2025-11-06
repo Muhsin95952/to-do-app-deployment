@@ -166,7 +166,22 @@ vite.config.ts.timestamp-*
 **/media/
 **/static/uploads/
 
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+
 # Local env files (already covered globally but make explicit per-service)
 /backend/.env
 /frontend/.env
+
+
+.terraform/terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+*.tfstate
+.hcl
+
 

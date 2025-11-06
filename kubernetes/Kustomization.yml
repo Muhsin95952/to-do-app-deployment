@@ -1,0 +1,23 @@
+# This file tells 'kustomize' which files to manage
+# and which image names to replace
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# List all the manifest files to include
+resources:
+  - backend-deployment.yml
+  - backend-service.yml
+  - frontend-deployment.yml
+  - frontend-service.yml
+
+# This 'images' block is the magic!
+# It matches the names we used in our Deployment.yml files
+# Your CI/CD pipeline will find these names and update the tag
+images:
+  - name: my-frontend-image # Must match 'image:' in frontend-deployment.yml
+    newName: ${{ secrets.DOCKER_USERNAME }}/my-todo-frontend
+    newTag: placeholder # The pipeline will overwrite this
+  - name: my-backend-image  # Must match 'image:' in backend-deployment.yml
+    newName: ${{ secrets.DOCKER_USERNAME }}/my-todo-backend
+    newTag: placeholder # The pipeline will overwrite this
