@@ -1,6 +1,6 @@
 # .github/workflows/ci-cd.yml
 
-name: Advanced CI/CD with Security Scanning
+name: CI/CD with Security Scanning
 
 on:
   push:
