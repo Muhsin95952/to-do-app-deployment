@@ -172,20 +172,3 @@ Everything related to the API is inside `flaskr/routes`. The following table sum
 | `PUT`       | */api/v1/tasks/id*      | Update a task                           |
 | `DELETE`    | */api/v1/tasks/id*      | Delete a task                           |
 
-## Image gallery
-
-### REST API Preview:
-
-![PREVIEW](./preview/preview1.png)
-![PREVIEW](./preview/preview2.png)
-
-### Frontend Preview
-
-![PREVIEW](./preview/preview3.png)
-![PREVIEW](./preview/preview4.png)
-![PREVIEW](./preview/preview5.png)
-![PREVIEW](./preview/preview6.png)
-![PREVIEW](./preview/preview7.png)
-![PREVIEW](./preview/preview8.png)
-
-### Developed by Santiago de Jesús Moraga Caldera - Remy349(GitHub)
